@@ -1,6 +1,6 @@
-import type { Field } from 'payload'
+import type { TextField } from 'payload'
 
-export const slugField: Field = {
+export const slugField: TextField = {
   name: 'slug',
   label: 'Slug',
   type: 'text',
