@@ -21,7 +21,7 @@ export const Media: CollectionConfig = {
       name: 'title',
       label: 'Image Title',
       type: 'text',
-      required: true,
+
     },
     {
       name: 'altText',
