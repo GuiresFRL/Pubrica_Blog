@@ -17,7 +17,10 @@ export const Posts: CollectionConfig = {
     read: () => true,
   },
 
-  indexes: [{ fields: ['source', 'slug'], unique: true }],
+  indexes: [
+    { fields: ['source', 'slug'], unique: true },
+    { fields: ['source', 'urlPath'], unique: true },
+  ],
 
   fields: [
     {
@@ -38,6 +41,16 @@ export const Posts: CollectionConfig = {
       },
     },
     { ...slugField, unique: false },
+    {
+      name: 'urlPath',
+      label: 'URL Path',
+      type: 'text',
+      index: true,
+      admin: {
+        description: 'Full path segment(s) after the source prefix, e.g. "phd-dissertation/engineering-technology/some-article".',
+        position: 'sidebar',
+      },
+    },
     {
       name: 'heroImage',
       label: 'Thumbnail Image',

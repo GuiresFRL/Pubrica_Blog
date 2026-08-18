@@ -154,8 +154,8 @@ export interface User {
  */
 export interface Media {
   id: number;
-  title: string;
-  altText: string;
+  title?: string | null;
+  altText?: string | null;
   caption?: string | null;
   credit?: string | null;
   focusKeyword?: string | null;
@@ -225,6 +225,10 @@ export interface Post {
    * Unique URL slug. Preserve the original WordPress slug during migration.
    */
   slug: string;
+  /**
+   * Full path segment(s) after the source prefix, e.g. "phd-dissertation/engineering-technology/some-article".
+   */
+  urlPath?: string | null;
   heroImage?: (number | null) | Media;
   author?: string | null;
   categories?: (number | Category)[] | null;
@@ -437,6 +441,7 @@ export interface PostsSelect<T extends boolean = true> {
   title?: T;
   source?: T;
   slug?: T;
+  urlPath?: T;
   heroImage?: T;
   author?: T;
   categories?: T;

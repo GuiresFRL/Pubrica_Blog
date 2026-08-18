@@ -10,14 +10,14 @@ import { createHeadingIdAssigner, getPlainText } from '@/utilities/slugify'
 import { getPostUrl } from '@/utilities/getPostUrl'
 import { SearchBox } from '@/components/SearchBox'
 
-async function getPost(slug: string, source: 'academy' | 'blog') {
+async function getPost(urlPath: string, source: 'academy' | 'blog') {
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
 
   const result = await payload.find({
     collection: 'posts',
     where: {
-      and: [{ slug: { equals: slug } }, { source: { equals: source } }],
+      and: [{ urlPath: { equals: urlPath } }, { source: { equals: source } }],
     },
     depth: 2,
     limit: 1,
@@ -51,10 +51,10 @@ function buildToc(children: any[], assignId: (text: string) => string) {
 export const PostDetail: React.FC<{
   listLabel: string
   listPath: string
-  slug: string
+  urlPath: string
   source: 'academy' | 'blog'
-}> = async ({ listLabel, listPath, slug, source }) => {
-  const post: any = await getPost(slug, source)
+}> = async ({ listLabel, listPath, urlPath, source }) => {
+  const post: any = await getPost(urlPath, source)
 
   if (!post) return notFound()
 
@@ -72,7 +72,7 @@ export const PostDetail: React.FC<{
         and: [
           { categories: { in: [primaryCategory.id] } },
           { source: { equals: source } },
-          { slug: { not_equals: slug } },
+          { urlPath: { not_equals: urlPath } },
         ],
       },
       limit: 8,
@@ -156,9 +156,7 @@ export const PostDetail: React.FC<{
               <ul className="sidebar-list">
                 {relatedPosts.map((related) => (
                   <li key={related.id}>
-                    <Link href={getPostUrl({ ...related, categories: [primaryCategory] }, source)}>
-                      {related.title}
-                    </Link>
+                    <Link href={getPostUrl(related, source)}>{related.title}</Link>
                   </li>
                 ))}
               </ul>
@@ -170,8 +168,8 @@ export const PostDetail: React.FC<{
   )
 }
 
-export async function getPostMetadata(slug: string, source: 'academy' | 'blog'): Promise<Metadata> {
-  const post: any = await getPost(slug, source)
+export async function getPostMetadata(urlPath: string, source: 'academy' | 'blog'): Promise<Metadata> {
+  const post: any = await getPost(urlPath, source)
 
   if (!post) return {}
 
@@ -180,7 +178,7 @@ export async function getPostMetadata(slug: string, source: 'academy' | 'blog'):
     description: post.seo?.metaDescription,
     keywords: post.seo?.metaKeywords,
     alternates: post.seo?.canonicalURL ? { canonical: post.seo.canonicalURL } : undefined,
-    robots: post.seo?.robots,
+    robots: { index: false, follow: false },
     openGraph: {
       title: post.seo?.metaTitle || post.title,
       description: post.seo?.metaDescription,

@@ -13,9 +13,9 @@ export default async function BlogPostPage({ params }: Args) {
   return (
     <PostDetail
       listLabel="Blog"
-      listPath="/blog"
-      slug={slug}
+      listPath="/blog/"
       source="blog"
+      urlPath={slug}
     />
   )
 }

@@ -17,7 +17,7 @@ export default async function AcademyPage({ searchParams }: Args) {
 
   return (
     <PostListing
-      basePath="/academy"
+      basePath="/academy/"
       breadcrumbLabel="Academy"
       description="Guides and resources from the Tutors India Academy."
       searchParams={resolvedSearchParams}

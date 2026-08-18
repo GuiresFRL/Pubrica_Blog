@@ -9,7 +9,7 @@ export const SearchBox: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    router.push(`/blog?q=${encodeURIComponent(query)}`)
+    router.push(`/blog/?q=${encodeURIComponent(query)}`)
   }
 
   return (

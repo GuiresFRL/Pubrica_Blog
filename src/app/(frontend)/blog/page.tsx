@@ -18,7 +18,7 @@ export default async function BlogPage({ searchParams }: Args) {
 
   return (
     <PostListing
-      basePath="/blog"
+      basePath="/blog/"
       breadcrumbLabel="Blog"
       description="Expert guides on dissertation writing, research methodology, referencing and academic success."
       searchParams={resolvedSearchParams}

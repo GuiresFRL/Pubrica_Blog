@@ -1,8 +1,5 @@
 export function getPostUrl(post: any, source: 'academy' | 'blog'): string {
-  if (source === 'blog') {
-    return `/blog/${post.slug}`
-  }
-
-  const categorySlug = post.categories?.[0]?.slug || 'uncategorized'
-  return `/academy/${categorySlug}/${post.slug}`
+  const base = source === 'blog' ? '/blog' : '/academy'
+  const urlPath = post.urlPath || post.slug
+  return `${base}/${urlPath}/`
 }

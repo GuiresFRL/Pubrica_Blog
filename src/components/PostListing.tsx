@@ -154,7 +154,7 @@ export const PostListing: React.FC<{
       {totalPages > 1 && (
         <nav className="blog-pagination" aria-label="Pagination">
           {page > 1 && (
-            <Link href={`${basePath}?page=${page - 1}${category ? `&category=${category}` : ''}`}>
+            <Link href={`${basePath}/?page=${page - 1}${category ? `&category=${category}` : ''}`}>
               ← Previous
             </Link>
           )}
@@ -162,7 +162,7 @@ export const PostListing: React.FC<{
             Page {page} of {totalPages}
           </span>
           {page < totalPages && (
-            <Link href={`${basePath}?page=${page + 1}${category ? `&category=${category}` : ''}`}>
+            <Link href={`${basePath}/?page=${page + 1}${category ? `&category=${category}` : ''}`}>
               Next →
             </Link>
           )}

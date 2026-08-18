@@ -21,9 +21,9 @@ export const CategoryFilter: React.FC<{
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     if (value) {
-      router.push(`${basePath}?category=${value}`)
+      router.push(`${basePath}/?category=${value}`)
     } else {
-      router.push(basePath)
+      router.push(`${basePath}/`)
     }
   }
 
