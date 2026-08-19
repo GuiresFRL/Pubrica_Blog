@@ -9,7 +9,7 @@ export const Media: CollectionConfig = {
 
   upload: {
     staticDir: 'media',
-    mimeTypes: ['image/*'],
+    mimeTypes: ['image/*', 'application/pdf', 'video/*'],
   },
 
   admin: {

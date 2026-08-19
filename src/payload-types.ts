@@ -220,7 +220,7 @@ export interface Tag {
 export interface Post {
   id: number;
   title: string;
-  source?: ('blog' | 'academy') | null;
+  source?: ('blog' | 'insights' | 'academy' | 'career') | null;
   /**
    * Unique URL slug. Preserve the original WordPress slug during migration.
    */

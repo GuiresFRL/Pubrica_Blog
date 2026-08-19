@@ -34,7 +34,9 @@ export const Posts: CollectionConfig = {
       defaultValue: 'blog',
       options: [
         { label: 'Blog', value: 'blog' },
+        { label: 'Insights', value: 'insights' },
         { label: 'Academy', value: 'academy' },
+        { label: 'Career', value: 'career' },
       ],
       admin: {
         position: 'sidebar',
