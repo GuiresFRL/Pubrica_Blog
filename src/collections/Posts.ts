@@ -37,6 +37,8 @@ export const Posts: CollectionConfig = {
         { label: 'Insights', value: 'insights' },
         { label: 'Academy', value: 'academy' },
         { label: 'Career', value: 'career' },
+        { label: 'Call for Papers', value: 'call-for-papers' },
+        { label: 'FAQ', value: 'faq' },
       ],
       admin: {
         position: 'sidebar',
