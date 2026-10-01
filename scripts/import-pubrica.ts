@@ -23,6 +23,9 @@ const SECTION_MAP: Record<string, string> = {
 
 const limitArg = process.argv.find((a) => a.startsWith("--limit="))
 const LIMIT = limitArg ? parseInt(limitArg.split("=")[1], 10) : Infinity
+// Skip anything already in the DB entirely (no update call) so previously
+// fixed fields (seo.metaTitle, rewritten internal links, etc.) are untouched.
+const NEW_ONLY = process.argv.includes("--new-only")
 
 // Older posts (pre-2023) have media/links hardcoded to the site's raw server IP
 // from before it sat behind a domain + TLS. That IP no longer accepts connections
@@ -426,6 +429,16 @@ async function run() {
     const { source, urlPath } = classified
     const title = he.decode(wp.title.rendered)
 
+    const existing = await payload.find({
+      collection: "posts",
+      where: { and: [{ source: { equals: source } }, { urlPath: { equals: urlPath } }] },
+    })
+
+    if (NEW_ONLY && existing.docs.length) {
+      skipped++
+      continue
+    }
+
     processed++
     console.log(`\n[${processed}] (${kind}/${source}) ${title}`)
 
@@ -500,11 +513,6 @@ async function run() {
         },
       }
 
-      const existing = await payload.find({
-        collection: "posts",
-        where: { and: [{ source: { equals: source } }, { urlPath: { equals: urlPath } }] },
-      })
-
       if (existing.docs.length) {
         await withRetry(() => payload.update({ collection: "posts", id: existing.docs[0].id, data }), `update ${urlPath}`)
         updated++
@@ -527,7 +535,7 @@ async function run() {
   console.log("Processed:", processed)
   console.log("Imported:", imported)
   console.log("Updated:", updated)
-  console.log("Skipped (outside blog/insights/academy/career):", skipped)
+  console.log(NEW_ONLY ? "Skipped (outside sections or already exists):" : "Skipped (outside blog/insights/academy/career):", skipped)
   console.log("Failed:", failed)
   if (failedItems.length) console.log("Failed items:", failedItems)
 

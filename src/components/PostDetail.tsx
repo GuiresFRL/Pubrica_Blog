@@ -148,7 +148,7 @@ export const PostDetail: React.FC<{
         </article>
 
         <aside className="post-sidebar">
-          <SearchBox />
+          <SearchBox basePath={listPath} />
 
           {primaryCategory && (
             <div className="sidebar-section">

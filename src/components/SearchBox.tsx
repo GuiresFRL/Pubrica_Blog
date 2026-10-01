@@ -3,13 +3,13 @@
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 
-export const SearchBox: React.FC = () => {
+export const SearchBox: React.FC<{ basePath?: string }> = ({ basePath = '/blog' }) => {
   const router = useRouter()
   const [query, setQuery] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    router.push(`/blog/?q=${encodeURIComponent(query)}`)
+    router.push(`${basePath.replace(/\/+$/, '')}/?q=${encodeURIComponent(query)}`)
   }
 
   return (

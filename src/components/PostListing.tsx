@@ -15,7 +15,8 @@ export const PostListing: React.FC<{
   searchParams: { category?: string; page?: string; q?: string }
   source: 'academy' | 'blog'
   title: string
-}> = async ({ basePath, breadcrumbLabel, description, searchParams, source, title }) => {
+}> = async ({ basePath: rawBasePath, breadcrumbLabel, description, searchParams, source, title }) => {
+  const basePath = rawBasePath.replace(/\/+$/, '')
   const { category, page: pageParam, q } = searchParams
   const page = Number(pageParam) || 1
 
@@ -154,7 +155,9 @@ export const PostListing: React.FC<{
       {totalPages > 1 && (
         <nav className="blog-pagination" aria-label="Pagination">
           {page > 1 && (
-            <Link href={`${basePath}/?page=${page - 1}${category ? `&category=${category}` : ''}`}>
+            <Link
+              href={`${basePath}/?page=${page - 1}${category ? `&category=${category}` : ''}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
+            >
               ← Previous
             </Link>
           )}
@@ -162,7 +165,9 @@ export const PostListing: React.FC<{
             Page {page} of {totalPages}
           </span>
           {page < totalPages && (
-            <Link href={`${basePath}/?page=${page + 1}${category ? `&category=${category}` : ''}`}>
+            <Link
+              href={`${basePath}/?page=${page + 1}${category ? `&category=${category}` : ''}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
+            >
               Next →
             </Link>
           )}

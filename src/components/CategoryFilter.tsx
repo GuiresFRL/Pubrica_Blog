@@ -13,7 +13,8 @@ export const CategoryFilter: React.FC<{
   basePath?: string
   categories: Category[]
   totalCount: number
-}> = ({ basePath = '/blog', categories, totalCount }) => {
+}> = ({ basePath: rawBasePath = '/blog', categories, totalCount }) => {
+  const basePath = rawBasePath.replace(/\/+$/, '')
   const router = useRouter()
   const searchParams = useSearchParams()
   const current = searchParams.get('category') || ''
