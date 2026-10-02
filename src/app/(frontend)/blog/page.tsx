@@ -4,9 +4,9 @@ import React from 'react'
 import { PostListing } from '@/components/PostListing'
 
 export const metadata: Metadata = {
-  title: 'Blog & Academic Resources | Tutors India',
+  title: 'Blog & Academic Resources | Pubrica',
   description:
-    'Expert guides on dissertation writing, research methodology, referencing and academic success.',
+    'Expert articles on medical writing, systematic reviews, research methodology and publication.',
 }
 
 type Args = {
@@ -20,7 +20,7 @@ export default async function BlogPage({ searchParams }: Args) {
     <PostListing
       basePath="/blog/"
       breadcrumbLabel="Blog"
-      description="Expert guides on dissertation writing, research methodology, referencing and academic success."
+      description="Expert articles on medical writing, systematic reviews, research methodology and publication."
       searchParams={resolvedSearchParams}
       source="blog"
       title="Blog & Academic Resources"

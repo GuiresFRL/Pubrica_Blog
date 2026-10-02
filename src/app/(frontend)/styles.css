@@ -630,6 +630,13 @@ svg {
   flex-shrink: 0;
 }
 
+.site-logo-img {
+  display: block;
+  height: 40px;
+  width: auto;
+  border-radius: 4px;
+}
+
 .site-logo-icon {
   font-size: 24px;
 }

@@ -6,8 +6,9 @@ import { Footer } from '@/components/Footer'
 import './styles.css'
 
 export const metadata: Metadata = {
-  description: 'Masters and MBA Research Writing Services | Tutors India',
-  title: 'Tutors India',
+  description: 'Medical writing, systematic review and publication support insights | Pubrica',
+  title: 'Pubrica',
+  icons: { icon: '/pubrica-icon.webp' },
   robots: {
     index: false,
     follow: false,

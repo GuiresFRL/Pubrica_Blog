@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
 
-const SITE_URL = 'https://www.tutorsindia.com'
+const SITE_URL = 'https://pubrica.com'
 
 export const Footer: React.FC = () => {
   return (
@@ -9,36 +9,34 @@ export const Footer: React.FC = () => {
       <div className="footer-grid">
         <div className="footer-about">
           <Link className="site-logo site-logo-footer" href="/">
-            <span className="site-logo-icon">🎓</span>
-            <span className="site-logo-text">Tutors India</span>
+            <img alt="Pubrica" className="site-logo-img" height={40} src="/pubrica-logo.png" width={125} />
           </Link>
           <p>
-            Tutors India is a pioneer in providing complete academic guidance and direction since
-            2001. Trusted by 10,000+ scholars, students &amp; entrepreneurs worldwide.
+            Pubrica provides medical writing, systematic review, statistical analysis and
+            publication support services to researchers, clinicians and life-science companies
+            worldwide.
           </p>
 
           <div className="footer-office">
-            <strong>Sheffield / Manchester, UK</strong>
-            <a href="tel:+441143520021">+44-1143520021</a>
-            <a href="mailto:info@tutorsindia.com">info@tutorsindia.com</a>
-          </div>
-
-          <div className="footer-office">
-            <strong>Chennai, India</strong>
-            <span>10, Kutty Street, Nungambakkam, Chennai – 600034</span>
-            <a href="tel:+918754446690">+91 8754446690</a>
+            <strong>Contact</strong>
+            <a href="mailto:sales@pubrica.com">sales@pubrica.com</a>
+            <a href="tel:+919884350006">+91 9884350006</a>
+            <a href="tel:+19725029262">+1-972-502-9262</a>
+            <a href="https://wa.me/919884350006" rel="noopener noreferrer" target="_blank">WhatsApp</a>
           </div>
         </div>
 
         <div className="footer-links">
-          <h3>Our Services</h3>
+          <h3>Explore</h3>
           <ul>
-            <li><a href={`${SITE_URL}/our-services/masters-dissertation-writing-services/`}>Masters Dissertation</a></li>
-            <li><a href={`${SITE_URL}/our-services/phd-dba-dissertation/`}>PhD Dissertation</a></li>
-            <li><a href={`${SITE_URL}/our-services/coursework-writing/`}>Coursework Writing</a></li>
-            <li><a href={`${SITE_URL}/our-services/editing-services/`}>Editing Services</a></li>
-            <li><a href={`${SITE_URL}/our-services/publication-support/`}>Publication Support</a></li>
-            <li><a href={`${SITE_URL}/our-services/development/`}>Development</a></li>
+            <li><a href={`${SITE_URL}/services/`}>Services</a></li>
+            <li><a href={`${SITE_URL}/services/research-services/`}>Research Services</a></li>
+            <li><a href={`${SITE_URL}/services/publication-support/`}>Publication Support</a></li>
+            <li><a href={`${SITE_URL}/industries/`}>Industries</a></li>
+            <li><a href={`${SITE_URL}/insights/`}>Insights</a></li>
+            <li><Link href="/academy/">Academy</Link></li>
+            <li><Link href="/blog/">Blog</Link></li>
+            <li><a href={`${SITE_URL}/call-for-papers/`}>Call for Papers</a></li>
           </ul>
         </div>
 
@@ -46,10 +44,10 @@ export const Footer: React.FC = () => {
           <h3>Company</h3>
           <ul>
             <li><a href={`${SITE_URL}/about-us/`}>About Us</a></li>
-            <li><a href={`${SITE_URL}/our-writers/`}>Our Writers</a></li>
-            <li><a href={`${SITE_URL}/our-process/`}>Our Process</a></li>
-            <li><a href={`${SITE_URL}/guarantees/`}>Guarantees</a></li>
-            <li><a href={`${SITE_URL}/testimonials/`}>Testimonials</a></li>
+            <li><a href={`${SITE_URL}/scientific-editor-profile/`}>Meet the Team</a></li>
+            <li><a href={`${SITE_URL}/subject-matter-experts/`}>Subject Areas</a></li>
+            <li><a href={`${SITE_URL}/testimonial/`}>Testimonials</a></li>
+            <li><a href={`${SITE_URL}/careers/`}>Careers</a></li>
             <li><a href={`${SITE_URL}/faq/`}>FAQ</a></li>
           </ul>
         </div>
@@ -57,11 +55,8 @@ export const Footer: React.FC = () => {
         <div className="footer-links">
           <h3>Support</h3>
           <ul>
-            <li><a href={`${SITE_URL}/pricing/`}>Pricing</a></li>
-            <li><a href={`${SITE_URL}/order-now/`}>Order Now</a></li>
             <li><a href={`${SITE_URL}/contact-us/`}>Contact Us</a></li>
-            <li><a href={`${SITE_URL}/customer-centre/`}>Customer Centre</a></li>
-            <li><a href={`${SITE_URL}/ask-an-expert/`}>Ask an Expert</a></li>
+            <li><a href={`${SITE_URL}/cookie-policy/`}>Cookie Policy</a></li>
             <li><a href={`${SITE_URL}/privacy-policy/`}>Privacy Policy</a></li>
             <li><a href={`${SITE_URL}/terms-and-conditions/`}>Terms &amp; Conditions</a></li>
           </ul>
@@ -70,21 +65,20 @@ export const Footer: React.FC = () => {
         <div className="footer-social">
           <h3>Follow Us</h3>
           <div className="footer-social-icons">
-            <a aria-label="Facebook" href="https://www.facebook.com/TutorsIndia" rel="noopener noreferrer" target="_blank">f</a>
-            <a aria-label="Instagram" href="https://www.instagram.com/tutors_india/" rel="noopener noreferrer" target="_blank">i</a>
-            <a aria-label="LinkedIn" href="https://www.linkedin.com/company/tutors-india" rel="noopener noreferrer" target="_blank">in</a>
-            <a aria-label="YouTube" href="https://www.youtube.com/channel/UCM7QdIYgF7vWMhgMZuwyfrg/" rel="noopener noreferrer" target="_blank">yt</a>
-            <a aria-label="X (Twitter)" href="https://twitter.com/TutorsIndia" rel="noopener noreferrer" target="_blank">x</a>
+            <a aria-label="Facebook" href="https://www.facebook.com/pubricamedicalwritingservices" rel="noopener noreferrer" target="_blank">f</a>
+            <a aria-label="Instagram" href="https://www.instagram.com/pubrica/" rel="noopener noreferrer" target="_blank">i</a>
+            <a aria-label="LinkedIn" href="https://www.linkedin.com/company/pubrica-scientific-medical-writing" rel="noopener noreferrer" target="_blank">in</a>
+            <a aria-label="YouTube" href="https://www.youtube.com/channel/UCDUT3JFoRJ4RF4lA7ZmdUjA/" rel="noopener noreferrer" target="_blank">yt</a>
+            <a aria-label="X (Twitter)" href="https://x.com/Pub_rica" rel="noopener noreferrer" target="_blank">x</a>
           </div>
         </div>
       </div>
 
       <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} Tutors India. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Pubrica. All rights reserved.</span>
         <span className="footer-bottom-links">
           <a href={`${SITE_URL}/privacy-policy/`}>Privacy Policy</a>
           <a href={`${SITE_URL}/terms-and-conditions/`}>Terms &amp; Conditions</a>
-          <a href={`${SITE_URL}/compliant-policy/`}>Complaint Policy</a>
         </span>
       </div>
     </footer>

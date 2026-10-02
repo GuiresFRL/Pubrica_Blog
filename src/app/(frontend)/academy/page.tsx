@@ -4,8 +4,8 @@ import React from 'react'
 import { PostListing } from '@/components/PostListing'
 
 export const metadata: Metadata = {
-  title: 'Academy | Tutors India',
-  description: 'Guides and resources from the Tutors India Academy.',
+  title: 'Academy | Pubrica',
+  description: 'Guides and resources from the Pubrica Academy.',
 }
 
 type Args = {
@@ -19,7 +19,7 @@ export default async function AcademyPage({ searchParams }: Args) {
     <PostListing
       basePath="/academy/"
       breadcrumbLabel="Academy"
-      description="Guides and resources from the Tutors India Academy."
+      description="Guides and resources from the Pubrica Academy."
       searchParams={resolvedSearchParams}
       source="academy"
       title="Academy"
