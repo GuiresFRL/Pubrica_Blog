@@ -254,6 +254,29 @@ async function cleanWordPressContent(html: string, payload: any, postTitle?: str
   $('*').removeAttr('class')
   $('*').removeAttr('style')
 
+  // Much of the legacy WP body copy is bare text sitting directly inside a <div> between
+  // lists/headings (no <p>). Wrap each run of loose text/inline nodes in a <p> so it's kept.
+  const BLOCK_TAGS = new Set(["p","h1","h2","h3","h4","h5","h6","ul","ol","li","table","div","section","article","img","blockquote","figure","pre","iframe","main","aside","nav","header","footer","form"])
+  $("div,section,article,main,blockquote").each((_, el: any) => {
+    const out: any[] = []
+    let run: any[] = []
+    const flush = () => {
+      if (run.length && run.some((n) => (n.type === "text" ? n.data.trim() : n.type === "tag" && $(n).text().trim()))) {
+        const p = $("<p></p>")
+        p.append(run)
+        out.push(p[0])
+      } else out.push(...run)
+      run = []
+    }
+    for (const n of [...el.children]) {
+      const inline = n.type === "text" || (n.type === "tag" && !BLOCK_TAGS.has(n.tagName))
+      if (inline) run.push(n)
+      else { flush(); out.push(n) }
+    }
+    flush()
+    $(el).empty().append(out)
+  })
+
   const blocks: any[] = []
 
   for (const element of $('h1,h2,h3,h4,p,li,img,div[data-embed-type="file"]').toArray()) {
@@ -692,6 +715,7 @@ async function refillElementor(file: string) {
         if (href && label) node.closest(".elementor-widget-button").replaceWith(`<p><a href="${href}">${label}</a></p>`)
       })
       const blocks = await cleanWordPressContent(page.html() || "", payload, t.title)
+      if (process.env.DEBUG_REFILL) console.log("DEBUG blocks", blocks.length, "html chars", (page.html() || "").length, "page found via", $(".entry-content").length ? "entry-content" : "other")
       const content = createLexicalContent([{ type: "h1", children: [{ type: "text", version: 1, detail: 0, format: 0, mode: "normal", style: "", text: t.title }] }, ...blocks])
       const old: any = await payload.findByID({ collection: "posts", id: t.id, depth: 0 })
       const oldLen = lexText(old.content?.root || {}).replace(/\s+/g, " ").trim().length
