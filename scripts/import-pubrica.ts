@@ -279,8 +279,26 @@ async function cleanWordPressContent(html: string, payload: any, postTitle?: str
 
   const blocks: any[] = []
 
-  for (const element of $('h1,h2,h3,h4,p,li,img,div[data-embed-type="file"]').toArray()) {
+  for (const element of $('h1,h2,h3,h4,p,li,img,table,div[data-embed-type="file"]').toArray()) {
     const tag = element.tagName
+
+    // Cells are handled together with their table below
+    if (tag !== 'table' && $(element).parents('table').length) continue
+
+    if (tag === 'table') {
+      const rows: any[] = []
+      for (const tr of $(element).find('tr').toArray()) {
+        const cells = $(tr).children('th,td').toArray().map((cell: any) => ({
+          header: cell.tagName === 'th',
+          colSpan: parseInt($(cell).attr('colspan') || '1', 10) || 1,
+          rowSpan: parseInt($(cell).attr('rowspan') || '1', 10) || 1,
+          children: parseInline($, cell.children),
+        }))
+        if (cells.length) rows.push(cells)
+      }
+      if (rows.length) blocks.push({ type: 'table', rows })
+      continue
+    }
 
     if (tag === 'div' && $(element).attr('data-embed-type') === 'file') {
       const rawSrc = $(element).attr('data-embed-src')
@@ -345,6 +363,19 @@ function createLexicalContent(blocks: any[]) {
     root: {
       type: "root", version: 1, direction: null, format: "", indent: 0,
       children: blocks.map((block) => {
+        if (block.type === "table") {
+          return {
+            type: "table", version: 1, direction: "ltr", format: "", indent: 0,
+            children: block.rows.map((cells: any[]) => ({
+              type: "tablerow", version: 1, direction: "ltr", format: "", indent: 0,
+              children: cells.map((cell) => ({
+                type: "tablecell", version: 1, direction: "ltr", format: "", indent: 0,
+                headerState: cell.header ? 1 : 0, colSpan: cell.colSpan, rowSpan: cell.rowSpan, backgroundColor: null,
+                children: [{ type: "paragraph", version: 1, direction: "ltr", format: "", indent: 0, textFormat: 0, children: cell.children }],
+              })),
+            })),
+          }
+        }
         if (block.type === "upload") {
           return {
             type: "upload",

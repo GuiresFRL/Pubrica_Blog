@@ -60,7 +60,7 @@ async function main() {
   }))
   fs.writeFileSync('missing_content_rest_all.json', JSON.stringify(results, null, 1))
   const scored = results.filter((r) => r.ratio !== undefined)
-  const bad = scored.filter((r) => (r.ratio < 0.7 && r.origText - r.ourText > 300) || r.origImgs - r.ourImgs > 1)
+  const bad = scored.filter((r) => (r.ratio < 0.85 && r.origText - r.ourText > 150) || r.origImgs - r.ourImgs > 1)
   fs.writeFileSync('missing_content_rest.json', JSON.stringify(bad, null, 1))
   console.log('audited', scored.length, 'no-rest', results.length - scored.length, 'incomplete', bad.length)
   process.exit(0)

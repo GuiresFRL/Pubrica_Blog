@@ -57,7 +57,7 @@ async function main() {
 
   fs.writeFileSync('missing_content_all.json', JSON.stringify(results, null, 1))
   const scored = results.filter((r) => r.ratio !== undefined)
-  const bad = scored.filter((r) => r.ratio < 0.7 && r.origText - r.ourText > 300)
+  const bad = scored.filter((r) => r.ratio < 0.85 && r.origText - r.ourText > 150)
   fs.writeFileSync('missing_content.json', JSON.stringify(bad, null, 1))
   const by: any = {}; bad.forEach((b) => (by[b.source] = (by[b.source] || 0) + 1))
   console.log('audited', scored.length, 'skipped', results.length - scored.length, 'incomplete', bad.length, by)

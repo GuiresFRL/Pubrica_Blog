@@ -26,11 +26,15 @@ async function main() {
 
   const { getPayload } = await import('payload')
   const payload = await getPayload({ config: await (await import('../src/payload.config')).default })
-  const all = await payload.find({ collection: 'posts', limit: 0, pagination: false, depth: 0, select: { content: true } })
+  const all = await payload.find({ collection: 'posts', limit: 0, pagination: false, depth: 0, select: { content: true, source: true, urlPath: true } })
+  // Every post in the CMS is served by the site at /<section>/<urlPath>/
+  const PREFIX: Record<string, string> = { blog: 'blog', insights: 'insights', academy: 'academy', career: 'careers', 'call-for-papers': 'call-for-papers', faq: 'faq' }
+  for (const d of all.docs as any[]) if (PREFIX[d.source] && d.urlPath) okPaths.add(slash(`/${PREFIX[d.source]}/${d.urlPath}`))
 
   const stats = { posts: 0, rewritten: 0, kept: 0 }
   const kept = new Map<string, number>()
   const backup: any[] = []
+  const queue: { id: number; content: any }[] = []
 
   const walk = (n: any, local: { changed: boolean }) => {
     if (n.type === 'link' && typeof n.fields?.url === 'string' && HOST.test(n.fields.url)) {
@@ -57,10 +61,21 @@ async function main() {
     if (!local.changed) continue
     stats.posts++
     backup.push({ id: d.id, content: d.content })
-    if (EXECUTE) await payload.update({ collection: 'posts', id: d.id, data: { content } })
+    queue.push({ id: d.id, content })
   }
 
   if (EXECUTE) fs.writeFileSync(path.join(SCRATCH, 'relative_links_backup.json'), JSON.stringify(backup))
+  // Save several posts at once; each write is a separate post so they can't overwrite each other.
+  if (EXECUTE) {
+    let i = 0
+    await Promise.all(Array.from({ length: 8 }, async () => {
+      while (true) {
+        const job = queue[i++]
+        if (!job) return
+        await payload.update({ collection: 'posts', id: job.id, data: { content: job.content } })
+      }
+    }))
+  }
   console.log(EXECUTE ? 'LIVE' : 'DRY RUN', stats)
   console.log('left external:', [...kept])
   process.exit(0)
