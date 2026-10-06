@@ -542,4 +542,157 @@ async function run() {
   process.exit()
 }
 
-run()
+// Some pages (Elementor theme templates) return an empty `content.rendered` from the
+// REST API even though the live page has a full body. For posts that were imported
+// empty, scrape the rendered front-end page's post-content widget instead.
+// Dry run unless --execute. Ids come from the JSON file passed to --fill-empty=<file>.
+const SOURCE_PREFIX: Record<string, string> = { blog: "blog", insights: "insights", academy: "academy", career: "careers" }
+
+async function fillEmpty(file: string) {
+  const EXECUTE = process.argv.includes("--execute")
+  const payload = await getPayload({ config })
+  await preloadMediaCache(payload)
+  const targets: any[] = JSON.parse(fs.readFileSync(file, "utf8"))
+  console.log(`Fill-empty (${EXECUTE ? "LIVE" : "DRY RUN"}): ${targets.length} posts`)
+
+  let filled = 0, noBody = 0, failed = 0
+  for (const t of targets) {
+    const url = `${BASE}/${SOURCE_PREFIX[t.source]}/${t.urlPath}/`
+    if (t.urlPath === "blogs") { console.log("SKIP (full filterable archive)", url); continue }
+    try {
+      const res = await axios.get(url, { timeout: 60000, validateStatus: () => true })
+      if (res.status !== 200) { console.log("SKIP", res.status, url); noBody++; continue }
+      const $ = cheerio.load(res.data)
+      // pubrica.com uses the Betheme builder: the body lives in .entry-content
+      let widget = $(".entry-content").first()
+      // Elementor pages (careers etc.) have no .entry-content: use the page template body
+      if (!widget.length) widget = $('[data-elementor-type="wp-page"]').first()
+      widget.find("h1").remove() // page title is rendered by our template
+      widget.find("style,script").remove()
+      // Category pages list posts as cards: keep titles + links, drop thumbnails
+      // and the "Read more"/"View" buttons.
+      widget.find("a").filter((_, e) => /^\s*(read more|view)\s*$/i.test($(e).text())).remove()
+      if (widget.find("li, h2, h4").find("a[href*='/academy/']").length >= 3) widget.find("img").remove()
+      const html = widget.length ? widget.html() || "" : ""
+      const blocks = html ? await cleanWordPressContent(html, payload, t.title) : []
+      if (blocks.length < 2) { console.log("NO BODY", url, `(${blocks.length} blocks)`); noBody++; continue }
+      console.log(EXECUTE ? "FILL" : "WOULD FILL", url, `${blocks.length} blocks`)
+      if (EXECUTE) {
+        await withRetry(() => payload.update({ collection: "posts", id: t.id, data: { content: createLexicalContent(blocks) } }), `fill ${t.urlPath}`)
+      }
+      filled++
+    } catch (error) {
+      console.log("FAILED", url, error instanceof Error ? error.message : error)
+      failed++
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  }
+  console.log({ filled, noBody, failed })
+  process.exit()
+}
+
+// Removes every reference to the WordPress install from stored content so the site
+// keeps working if pubrica.com is taken down: wp-json API links are unwrapped to plain
+// text, and wp-content files (PDFs etc.) are re-uploaded to our own media storage.
+// Dry run unless --execute. Post ids come from the JSON file in --localize-wp=<file>.
+const WP_RE = /^https?:\/\/(?:www\.)?(?:pubrica|tutorsindia)\.com\/wp-(content|json|includes)/i
+
+async function localizeNodes(nodes: any[], payload: any, stats: any, execute: boolean): Promise<any[]> {
+  const out: any[] = []
+  for (const node of nodes || []) {
+    if (node.children) node.children = await localizeNodes(node.children, payload, stats, execute)
+    const url: string | undefined = node.type === "link" ? node.fields?.url : undefined
+    const m = url ? WP_RE.exec(url) : null
+    if (!m) { out.push(node); continue }
+    if (m[1].toLowerCase() === "json") {
+      stats.unwrapped++
+      out.push(...(node.children || []))
+      continue
+    }
+    try {
+      const fileName = decodeURIComponent(path.basename(new URL(url!).pathname))
+      let id = mediaCache.get(fileName)
+      if (!id && execute) id = await getOrUploadMedia(url!, fileName.replace(/\.[^.]+$/, ""), fileName, payload)
+      if (execute && id) {
+        const media = await payload.findByID({ collection: "media", id, depth: 0 })
+        node.fields.url = media.url
+      }
+      stats.localized++
+    } catch (e) {
+      stats.failed++
+      console.log("FAILED localize", url, e instanceof Error ? e.message : e)
+    }
+    out.push(node)
+  }
+  return out
+}
+
+async function localizeWp(file: string) {
+  const EXECUTE = process.argv.includes("--execute")
+  const payload = await getPayload({ config })
+  await preloadMediaCache(payload)
+  const ids = [...new Set<number>(JSON.parse(fs.readFileSync(file, "utf8")).filter((h: any) => h.field === "content").map((h: any) => h.id))]
+  console.log(`Localize WP (${EXECUTE ? "LIVE" : "DRY RUN"}): ${ids.length} posts`)
+  const stats = { unwrapped: 0, localized: 0, failed: 0 }
+  for (const id of ids) {
+    const doc: any = await payload.findByID({ collection: "posts", id, depth: 0 })
+    const content = JSON.parse(JSON.stringify(doc.content))
+    content.root.children = await localizeNodes(content.root.children, payload, stats, EXECUTE)
+    if (EXECUTE) await withRetry(() => payload.update({ collection: "posts", id, data: { content } }), `localize ${id}`)
+  }
+  console.log(stats)
+  process.exit()
+}
+
+// Career pages are built with Elementor: body copy sits in bare <div>s inside text-editor
+// widgets, bullets in icon-list widgets (which the generic cleaner strips as share
+// icons) and the apply call-to-action in a button widget. Re-scrape those pages from
+// the live site with Elementor-aware handling. Dry run unless --execute.
+async function refillCareers(file: string) {
+  const EXECUTE = process.argv.includes("--execute")
+  const payload = await getPayload({ config })
+  await preloadMediaCache(payload)
+  const targets: any[] = JSON.parse(fs.readFileSync(file, "utf8")).filter((t: any) => t.urlPath && t.urlPath !== "job-posting")
+  console.log(`Refill careers (${EXECUTE ? "LIVE" : "DRY RUN"}): ${targets.length} posts`)
+
+  let done = 0, skipped = 0, failed = 0
+  for (const t of targets) {
+    const url = `${BASE}/careers/${t.urlPath}/`
+    try {
+      const res = await axios.get(url, { timeout: 60000, validateStatus: () => true })
+      if (res.status !== 200) { console.log("SKIP", res.status, url); skipped++; continue }
+      const $ = cheerio.load(res.data)
+      const page = $('[data-elementor-type="wp-page"]').first()
+      if (!page.length) { console.log("NO PAGE BODY", url); skipped++; continue }
+      page.find("h1,style,script,svg,noscript").remove()
+      page.find(".elementor-widget-social-icons,.elementor-widget-share-buttons").remove()
+      page.find(".elementor-widget-icon-list").removeClass("elementor-widget-icon-list")
+      page.find(".elementor-widget-text-editor .elementor-widget-container").each((_, el) => {
+        if (!$(el).children("p,h1,h2,h3,h4,h5,h6,ul,ol").length) $(el).html(`<p>${$(el).html()}</p>`)
+      })
+      page.find("a.elementor-button").each((_, a) => {
+        const href = $(a).attr("href")
+        const label = $(a).text().replace(/\s+/g, " ").trim()
+        if (href && label) $(a).closest(".elementor-widget-button").replaceWith(`<p><a href="${href}">${label}</a></p>`)
+      })
+      const blocks = await cleanWordPressContent(page.html() || "", payload, t.title)
+      const content = createLexicalContent([{ type: "h1", children: [{ type: "text", version: 1, detail: 0, format: 0, mode: "normal", style: "", text: t.title }] }, ...blocks])
+      console.log(EXECUTE ? "WRITE" : "WOULD WRITE", url, `${blocks.length} blocks`)
+      if (EXECUTE) await withRetry(() => payload.update({ collection: "posts", id: t.id, data: { content } }), `careers ${t.urlPath}`)
+      done++
+    } catch (error) {
+      console.log("FAILED", url, error instanceof Error ? error.message : error)
+      failed++
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  }
+  console.log({ done, skipped, failed })
+  process.exit()
+}
+
+const fillArg = process.argv.find((a) => a.startsWith("--fill-empty="))
+const localizeArg = process.argv.find((a) => a.startsWith("--localize-wp="))
+if (fillArg) fillEmpty(fillArg.split("=")[1])
+else if (process.argv.find((a) => a.startsWith("--refill-careers="))) refillCareers(process.argv.find((a) => a.startsWith("--refill-careers="))!.split("=")[1])
+else if (localizeArg) localizeWp(localizeArg.split("=")[1])
+else run()
