@@ -644,25 +644,30 @@ async function localizeWp(file: string) {
   process.exit()
 }
 
-// Career pages are built with Elementor: body copy sits in bare <div>s inside text-editor
-// widgets, bullets in icon-list widgets (which the generic cleaner strips as share
-// icons) and the apply call-to-action in a button widget. Re-scrape those pages from
-// the live site with Elementor-aware handling. Dry run unless --execute.
-async function refillCareers(file: string) {
+// Many pages (careers, sample work, academy Q&A, ...) are built with Elementor: body copy
+// sits in bare <div>s inside text-editor widgets, bullets in icon-list widgets (which the
+// generic cleaner strips as share icons) and calls to action in button widgets. Re-scrape
+// those pages from the live site with Elementor-aware handling. Only overwrites a post when
+// the re-scrape yields clearly more text than what is stored. Dry run unless --execute.
+const SECTION_PREFIX: Record<string, string> = { blog: "blog", insights: "insights", academy: "academy", career: "careers", "call-for-papers": "call-for-papers", faq: "faq" }
+const lexText = (n: any): string => (n.text ?? "") + " " + (n.children || []).map(lexText).join(" ")
+
+async function refillElementor(file: string) {
   const EXECUTE = process.argv.includes("--execute")
   const payload = await getPayload({ config })
   await preloadMediaCache(payload)
-  const targets: any[] = JSON.parse(fs.readFileSync(file, "utf8")).filter((t: any) => t.urlPath && t.urlPath !== "job-posting")
-  console.log(`Refill careers (${EXECUTE ? "LIVE" : "DRY RUN"}): ${targets.length} posts`)
+  const targets: any[] = JSON.parse(fs.readFileSync(file, "utf8")).filter((t: any) => t.urlPath && t.urlPath !== "blogs" && SECTION_PREFIX[t.source])
+  console.log(`Refill Elementor (${EXECUTE ? "LIVE" : "DRY RUN"}): ${targets.length} posts`)
 
   let done = 0, skipped = 0, failed = 0
   for (const t of targets) {
-    const url = `${BASE}/careers/${t.urlPath}/`
+    const url = `${BASE}/${SECTION_PREFIX[t.source]}/${t.urlPath}/`
     try {
       const res = await axios.get(url, { timeout: 60000, validateStatus: () => true })
       if (res.status !== 200) { console.log("SKIP", res.status, url); skipped++; continue }
       const $ = cheerio.load(res.data)
-      const page = $('[data-elementor-type="wp-page"]').first()
+      let page = $(".entry-content").first()
+      if (!page.length) page = $('[data-elementor-type="wp-page"]').first()
       if (!page.length) { console.log("NO PAGE BODY", url); skipped++; continue }
       page.find("h1,style,script,svg,noscript").remove()
       page.find(".elementor-widget-social-icons,.elementor-widget-share-buttons").remove()
@@ -677,8 +682,12 @@ async function refillCareers(file: string) {
       })
       const blocks = await cleanWordPressContent(page.html() || "", payload, t.title)
       const content = createLexicalContent([{ type: "h1", children: [{ type: "text", version: 1, detail: 0, format: 0, mode: "normal", style: "", text: t.title }] }, ...blocks])
-      console.log(EXECUTE ? "WRITE" : "WOULD WRITE", url, `${blocks.length} blocks`)
-      if (EXECUTE) await withRetry(() => payload.update({ collection: "posts", id: t.id, data: { content } }), `careers ${t.urlPath}`)
+      const old: any = await payload.findByID({ collection: "posts", id: t.id, depth: 0 })
+      const oldLen = lexText(old.content?.root || {}).replace(/\s+/g, " ").trim().length
+      const newLen = lexText(content.root).replace(/\s+/g, " ").trim().length
+      if (newLen <= oldLen * 1.05) { console.log("KEEP (no gain)", url, `${oldLen} -> ${newLen}`); skipped++; continue }
+      console.log(EXECUTE ? "WRITE" : "WOULD WRITE", url, `${oldLen} -> ${newLen} chars`)
+      if (EXECUTE) await withRetry(() => payload.update({ collection: "posts", id: t.id, data: { content } }), `refill ${t.urlPath}`)
       done++
     } catch (error) {
       console.log("FAILED", url, error instanceof Error ? error.message : error)
@@ -693,6 +702,6 @@ async function refillCareers(file: string) {
 const fillArg = process.argv.find((a) => a.startsWith("--fill-empty="))
 const localizeArg = process.argv.find((a) => a.startsWith("--localize-wp="))
 if (fillArg) fillEmpty(fillArg.split("=")[1])
-else if (process.argv.find((a) => a.startsWith("--refill-careers="))) refillCareers(process.argv.find((a) => a.startsWith("--refill-careers="))!.split("=")[1])
+else if (process.argv.find((a) => a.startsWith("--refill-elementor="))) refillElementor(process.argv.find((a) => a.startsWith("--refill-elementor="))!.split("=")[1])
 else if (localizeArg) localizeWp(localizeArg.split("=")[1])
 else run()

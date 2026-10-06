@@ -46,6 +46,22 @@ export const Posts: CollectionConfig = {
     },
     { ...slugField, unique: false },
     {
+      name: 'jobType',
+      label: 'Job Type',
+      type: 'select',
+      hasMany: true,
+      options: [
+        { label: 'Full-time', value: 'full-time' },
+        { label: 'Freelance', value: 'freelance' },
+        { label: 'Internship', value: 'internship' },
+      ],
+      admin: {
+        position: 'sidebar',
+        condition: (data) => data.source === 'career',
+        description: 'Which career job-board tab(s) this posting appears under.',
+      },
+    },
+    {
       name: 'urlPath',
       label: 'URL Path',
       type: 'text',
