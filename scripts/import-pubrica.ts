@@ -668,17 +668,28 @@ async function refillElementor(file: string) {
       const $ = cheerio.load(res.data)
       let page = $(".entry-content").first()
       if (!page.length) page = $('[data-elementor-type="wp-page"]').first()
+      if (!page.length) {
+        // Standard WP posts rendered through a theme template: use the REST body instead.
+        const slug = t.urlPath.split("/").pop()
+        for (const type of ["posts", "pages"]) {
+          const rest = await axios.get(`${BASE}/wp-json/wp/v2/${type}?slug=${encodeURIComponent(slug)}&_fields=link,content`, { timeout: 60000, validateStatus: () => true })
+          const hit = Array.isArray(rest.data) ? rest.data.find((x: any) => x.link === url) : null
+          if (hit?.content?.rendered) { page = cheerio.load(`<div id="rest-body">${hit.content.rendered}</div>`)("#rest-body"); break }
+        }
+      }
       if (!page.length) { console.log("NO PAGE BODY", url); skipped++; continue }
       page.find("h1,style,script,svg,noscript").remove()
       page.find(".elementor-widget-social-icons,.elementor-widget-share-buttons").remove()
       page.find(".elementor-widget-icon-list").removeClass("elementor-widget-icon-list")
       page.find(".elementor-widget-text-editor .elementor-widget-container").each((_, el) => {
-        if (!$(el).children("p,h1,h2,h3,h4,h5,h6,ul,ol").length) $(el).html(`<p>${$(el).html()}</p>`)
+        const node = page.find(el)
+        if (!node.children("p,h1,h2,h3,h4,h5,h6,ul,ol").length) node.html(`<p>${node.html()}</p>`)
       })
       page.find("a.elementor-button").each((_, a) => {
-        const href = $(a).attr("href")
-        const label = $(a).text().replace(/\s+/g, " ").trim()
-        if (href && label) $(a).closest(".elementor-widget-button").replaceWith(`<p><a href="${href}">${label}</a></p>`)
+        const node = page.find(a)
+        const href = node.attr("href")
+        const label = node.text().replace(/\s+/g, " ").trim()
+        if (href && label) node.closest(".elementor-widget-button").replaceWith(`<p><a href="${href}">${label}</a></p>`)
       })
       const blocks = await cleanWordPressContent(page.html() || "", payload, t.title)
       const content = createLexicalContent([{ type: "h1", children: [{ type: "text", version: 1, detail: 0, format: 0, mode: "normal", style: "", text: t.title }] }, ...blocks])
